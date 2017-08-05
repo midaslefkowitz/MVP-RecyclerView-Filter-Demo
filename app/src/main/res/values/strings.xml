@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MVP RecyclerView Filter Demo</string>
+    <string name="activity_main_filter_hint">Filter data</string>
+</resources>

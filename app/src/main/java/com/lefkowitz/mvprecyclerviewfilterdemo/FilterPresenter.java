@@ -1,6 +1,8 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 
 /**
  * Created by yitz on 8/4/2017.
@@ -14,11 +16,13 @@ public class FilterPresenter implements FilterContract.Presenter {
     private ArrayList<String> _fullWordList = new ArrayList<>();
     private ArrayList<String> _wordsToDisplay = new ArrayList<>();
 
+    private Deque<ArrayList<String>> _pendingUpdates = new ArrayDeque<>();
+
     @Override
     public void start() {
         _fullWordList.addAll(_data.getWordsList());
-        _wordsToDisplay.addAll(_fullWordList);
-        _view.itemsLoaded();
+        _wordsToDisplay.addAll(_data.getWordsList());
+        _view.initialWordLoad();
     }
 
     @Override
@@ -34,7 +38,7 @@ public class FilterPresenter implements FilterContract.Presenter {
     @Override
     public void filter(String query) {
         query = query.toLowerCase();
-        final ArrayList<String> filteredList = new ArrayList<>();
+        ArrayList<String> filteredList = new ArrayList<>();
         for (int i = 0, len = _fullWordList.size(); i < len; i++) {
             String word = _fullWordList.get(i);
             final String text = word.toLowerCase();
@@ -42,60 +46,35 @@ public class FilterPresenter implements FilterContract.Presenter {
                 filteredList.add(word);
             }
         }
-        filterTo(filteredList);
+
+        _pendingUpdates.push(filteredList);
+        if (_pendingUpdates.size() > 1) {
+            return;
+        }
+
+        updateItems(filteredList);
     }
 
-    private void filterTo(ArrayList<String> words) {
-        applyRemovals(words);
-        applyAdditions(words);
-        applyMovedItems(words);
+    @Override
+    public void beforeListUpdated(ArrayList<String> newItemsToDisplay) {
+        _pendingUpdates.remove(newItemsToDisplay);
     }
 
-    private void applyRemovals(ArrayList<String> newItems) {
-        for (int i = _wordsToDisplay.size() - 1; i >= 0; i--) {
-            String word = _wordsToDisplay.get(i);
-            if (!newItems.contains(word)) {
-                removeItem(i);
-            }
+    @Override
+    public void onListUpdated(ArrayList<String> newItemsToDisplay) {
+        _view.showProgress(false);
+        _wordsToDisplay.clear();
+        _wordsToDisplay.addAll(newItemsToDisplay);
+        if (_pendingUpdates.size() > 0) {
+            ArrayList<String> latest = _pendingUpdates.pop();
+            _pendingUpdates.clear();
+            updateItems(latest);
         }
     }
 
-    private void applyAdditions(ArrayList<String> newItems) {
-        for (int i = 0, count = newItems.size(); i < count; i++) {
-            String word = newItems.get(i);
-            if (!_wordsToDisplay.contains(word)) {
-                addItem(i, word);
-            }
-        }
-    }
-
-    private void applyMovedItems(ArrayList<String> newItems) {
-        for (int toPosition = newItems.size() - 1; toPosition >= 0; toPosition--) {
-            String word = newItems.get(toPosition);
-            int fromPosition = _wordsToDisplay.indexOf(word);
-            if (fromPosition >= 0 && fromPosition != toPosition) {
-                moveItem(fromPosition, toPosition);
-            }
-        }
-    }
-
-    private String removeItem(int position) {
-        String word = _wordsToDisplay.remove(position);
-        _view.itemRemovedAt(position);
-        return word;
-    }
-
-    private void addItem(int position, String word) {
-        position = Math.min(position, _wordsToDisplay.size() - 1);
-        _wordsToDisplay.add(position, word);
-        _view.itemAddedAt(position);
-    }
-
-    private void moveItem(int fromPosition, int toPosition) {
-        toPosition = Math.min(toPosition, _wordsToDisplay.size() - 1);
-        String word = _wordsToDisplay.remove(fromPosition);
-        _wordsToDisplay.add(toPosition, word);
-        _view.itemMoved(fromPosition, toPosition);
+    private void updateItems(ArrayList<String> latest) {
+        _view.showProgress(true);
+        _view.updateItems(latest);
     }
 
     public FilterPresenter(FilterContract.View view, DataManager data) {

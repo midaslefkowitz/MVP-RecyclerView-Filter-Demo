@@ -1,5 +1,7 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
+import java.util.ArrayList;
+
 /**
  * Created by yitz on 8/4/2017.
  */
@@ -7,21 +9,21 @@ package com.lefkowitz.mvprecyclerviewfilterdemo;
 public interface FilterContract {
 
     interface View {
-        void itemsLoaded();
+        void initialWordLoad();
 
-        void itemRemovedAt(int pos);
+        void showProgress(boolean show);
 
-        void itemAddedAt(int pos);
-
-        void itemChangedAt(int pos);
-
-        void itemMoved(int from, int to);
+        void updateItems(ArrayList<String> oldList);
     }
 
     interface Presenter {
         void start();
 
         String getItemAt(int position);
+
+        void beforeListUpdated(ArrayList<String> newItemsToDisplay);
+
+        void onListUpdated(ArrayList<String> newItemsToDisplay);
 
         int getItemsCount();
 

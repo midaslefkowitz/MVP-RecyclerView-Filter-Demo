@@ -1,6 +1,5 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
-import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -12,8 +11,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements FilterContract.View {
 
@@ -84,19 +81,19 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
     }
 
     @Override
-    public void updateItems(final ArrayList<String> newList) {
+    public void updateItems() {
         final Handler handler = new Handler();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 final DiffUtil.DiffResult diffResult =
-                        DiffUtil.calculateDiff(new MyDiffCallback(_presenter, newList));
+                        DiffUtil.calculateDiff(new MyDiffCallback(_presenter));
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        _presenter.beforeListUpdated(newList);
                         diffResult.dispatchUpdatesTo(_itemsListRV.getAdapter());
-                        _presenter.onListUpdated(newList);
+                        _itemsListRV.scrollToPosition(0);
+                        _presenter.onListUpdated();
                     }
                 });
             }
@@ -106,11 +103,9 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
     public static class MyDiffCallback extends DiffUtil.Callback {
 
         private FilterContract.Presenter _presenter;
-        private ArrayList<String> _newList;
 
-        public MyDiffCallback(FilterContract.Presenter presenter, ArrayList<String> newList) {
+        public MyDiffCallback(FilterContract.Presenter presenter) {
             _presenter = presenter;
-            _newList = newList;
         }
 
         @Override
@@ -120,13 +115,13 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
 
         @Override
         public int getNewListSize() {
-            return _newList.size();
+            return _presenter.getPendingItemsCount();
         }
 
         @Override
         public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
             String oldString = _presenter.getItemAt(oldItemPosition);
-            String newString = _newList.get(newItemPosition);
+            String newString = _presenter.getPendingItemAt(newItemPosition);
             if (oldString == null || newString == null) {
                 return false;
             }
@@ -135,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
 
         @Override
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            return _presenter.getItemAt(oldItemPosition).equals(_newList.get(newItemPosition));
+            return _presenter.getItemAt(oldItemPosition).equals(_presenter.getPendingItemAt(newItemPosition));
         }
     }
 }

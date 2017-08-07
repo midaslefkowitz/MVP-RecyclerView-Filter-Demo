@@ -1,8 +1,6 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 
 /**
  * Created by yitz on 8/4/2017.
@@ -16,7 +14,7 @@ public class FilterPresenter implements FilterContract.Presenter {
     private ArrayList<String> _fullWordList = new ArrayList<>();
     private ArrayList<String> _wordsToDisplay = new ArrayList<>();
 
-    private Deque<ArrayList<String>> _pendingUpdates = new ArrayDeque<>();
+    private ArrayList<ArrayList<String>> _pendingUpdates = new ArrayList<>();
 
     @Override
     public void start() {
@@ -47,34 +45,40 @@ public class FilterPresenter implements FilterContract.Presenter {
             }
         }
 
-        _pendingUpdates.push(filteredList);
+        _pendingUpdates.add(filteredList);
         if (_pendingUpdates.size() > 1) {
             return;
         }
 
-        updateItems(filteredList);
+        updateItems();
     }
 
     @Override
-    public void beforeListUpdated(ArrayList<String> newItemsToDisplay) {
-        _pendingUpdates.remove(newItemsToDisplay);
+    public String getPendingItemAt(int position) {
+        return _pendingUpdates.get(0).get(position);
     }
 
     @Override
-    public void onListUpdated(ArrayList<String> newItemsToDisplay) {
+    public int getPendingItemsCount() {
+        return _pendingUpdates.get(0).size();
+    }
+
+    @Override
+    public void onListUpdated() {
         _view.showProgress(false);
         _wordsToDisplay.clear();
-        _wordsToDisplay.addAll(newItemsToDisplay);
+        _wordsToDisplay.addAll(_pendingUpdates.remove(0));
         if (_pendingUpdates.size() > 0) {
-            ArrayList<String> latest = _pendingUpdates.pop();
+            ArrayList<String> latest = _pendingUpdates.remove(_pendingUpdates.size() - 1);
             _pendingUpdates.clear();
-            updateItems(latest);
+            _pendingUpdates.add(0, latest);
+            updateItems();
         }
     }
 
-    private void updateItems(ArrayList<String> latest) {
+    private void updateItems() {
         _view.showProgress(true);
-        _view.updateItems(latest);
+        _view.updateItems();
     }
 
     public FilterPresenter(FilterContract.View view, DataManager data) {

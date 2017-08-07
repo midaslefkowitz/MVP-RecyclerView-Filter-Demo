@@ -13,7 +13,7 @@ public interface FilterContract {
 
         void showProgress(boolean show);
 
-        void updateItems(ArrayList<String> oldList);
+        void updateItems();
     }
 
     interface Presenter {
@@ -21,11 +21,13 @@ public interface FilterContract {
 
         String getItemAt(int position);
 
-        void beforeListUpdated(ArrayList<String> newItemsToDisplay);
+        String getPendingItemAt(int position);
 
-        void onListUpdated(ArrayList<String> newItemsToDisplay);
+        void onListUpdated();
 
         int getItemsCount();
+
+        int getPendingItemsCount();
 
         void filter(String query);
     }

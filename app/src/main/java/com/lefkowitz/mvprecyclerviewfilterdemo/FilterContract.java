@@ -1,6 +1,6 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
-import java.util.ArrayList;
+import android.support.v7.util.DiffUtil;
 
 /**
  * Created by yitz on 8/4/2017.
@@ -13,7 +13,7 @@ public interface FilterContract {
 
         void showProgress(boolean show);
 
-        void updateItems();
+        void updateItems(DiffUtil.DiffResult diffResult);
     }
 
     interface Presenter {
@@ -22,8 +22,6 @@ public interface FilterContract {
         String getItemAt(int position);
 
         String getPendingItemAt(int position);
-
-        void onListUpdated();
 
         int getItemsCount();
 

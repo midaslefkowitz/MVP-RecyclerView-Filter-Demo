@@ -1,7 +1,6 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
@@ -81,56 +80,10 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
     }
 
     @Override
-    public void updateItems() {
-        final Handler handler = new Handler();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final DiffUtil.DiffResult diffResult =
-                        DiffUtil.calculateDiff(new MyDiffCallback(_presenter));
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        diffResult.dispatchUpdatesTo(_itemsListRV.getAdapter());
-                        _itemsListRV.scrollToPosition(0);
-                        _presenter.onListUpdated();
-                    }
-                });
-            }
-        }).start();
+    public void updateItems(DiffUtil.DiffResult diffResult) {
+        diffResult.dispatchUpdatesTo(_itemsListRV.getAdapter());
+        _itemsListRV.scrollToPosition(0);
     }
 
-    public static class MyDiffCallback extends DiffUtil.Callback {
 
-        private FilterContract.Presenter _presenter;
-
-        public MyDiffCallback(FilterContract.Presenter presenter) {
-            _presenter = presenter;
-        }
-
-        @Override
-        public int getOldListSize() {
-            return _presenter.getItemsCount();
-        }
-
-        @Override
-        public int getNewListSize() {
-            return _presenter.getPendingItemsCount();
-        }
-
-        @Override
-        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            String oldString = _presenter.getItemAt(oldItemPosition);
-            String newString = _presenter.getPendingItemAt(newItemPosition);
-            if (oldString == null || newString == null) {
-                return false;
-            }
-            return oldString.hashCode() == newString.hashCode();
-        }
-
-        @Override
-        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            return _presenter.getItemAt(oldItemPosition).equals(_presenter.getPendingItemAt(newItemPosition));
-        }
-    }
 }

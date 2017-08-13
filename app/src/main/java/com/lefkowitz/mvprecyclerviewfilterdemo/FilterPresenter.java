@@ -1,5 +1,8 @@
 package com.lefkowitz.mvprecyclerviewfilterdemo;
 
+import android.os.Handler;
+import android.support.v7.util.DiffUtil;
+
 import java.util.ArrayList;
 
 /**
@@ -63,8 +66,26 @@ public class FilterPresenter implements FilterContract.Presenter {
         return _pendingUpdates.get(0).size();
     }
 
-    @Override
-    public void onListUpdated() {
+    private void updateItems() {
+        _view.showProgress(true);
+        final Handler handler = new Handler();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final DiffUtil.DiffResult diffResult =
+                        DiffUtil.calculateDiff(new MyDiffCallback(FilterPresenter.this));
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        _view.updateItems(diffResult);
+                        onListUpdated();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    void onListUpdated() {
         _view.showProgress(false);
         _wordsToDisplay.clear();
         _wordsToDisplay.addAll(_pendingUpdates.remove(0));
@@ -76,13 +97,42 @@ public class FilterPresenter implements FilterContract.Presenter {
         }
     }
 
-    private void updateItems() {
-        _view.showProgress(true);
-        _view.updateItems();
-    }
-
     public FilterPresenter(FilterContract.View view, DataManager data) {
         _view = view;
         _data = data;
+    }
+
+    public static class MyDiffCallback extends DiffUtil.Callback {
+
+        private FilterContract.Presenter _presenter;
+
+        public MyDiffCallback(FilterContract.Presenter presenter) {
+            _presenter = presenter;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return _presenter.getItemsCount();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return _presenter.getPendingItemsCount();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            String oldString = _presenter.getItemAt(oldItemPosition);
+            String newString = _presenter.getPendingItemAt(newItemPosition);
+            if (oldString == null || newString == null) {
+                return false;
+            }
+            return oldString.hashCode() == newString.hashCode();
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return _presenter.getItemAt(oldItemPosition).equals(_presenter.getPendingItemAt(newItemPosition));
+        }
     }
 }

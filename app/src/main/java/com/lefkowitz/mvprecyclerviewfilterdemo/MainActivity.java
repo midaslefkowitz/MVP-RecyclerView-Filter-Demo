@@ -25,23 +25,20 @@ public class MainActivity extends AppCompatActivity implements FilterContract.Vi
 
         setContentView(R.layout.activity_main);
 
+        _presenter = (FilterPresenter) getLastCustomNonConfigurationInstance();
+
+        boolean onRestore = _presenter != null;
+
+        if (_presenter == null) {
+            _presenter = new FilterPresenter(this, new DataManager(getResources()));
+        }
+
         findViews();
 
         initViews();
 
-        _presenter = (FilterContract.Presenter) getLastCustomNonConfigurationInstance();
-
-        if (_presenter == null) {
-
-            _presenter = new FilterPresenter(this, new DataManager(getResources()));
-
-            _presenter.start();
-
-        } else {
-
-            _presenter.attachView(this);
-
-        }
+        if (onRestore) _presenter.attachView(this);
+        else _presenter.start();
     }
 
     @Override

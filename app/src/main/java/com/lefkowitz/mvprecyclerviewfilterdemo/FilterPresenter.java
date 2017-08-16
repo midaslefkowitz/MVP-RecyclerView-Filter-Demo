@@ -15,6 +15,7 @@ public class FilterPresenter implements FilterContract.Presenter {
 
     private FilterContract.View _view;
     private DataManager _data;
+    private boolean _isProgressShowing;
 
     private ArrayList<String> _fullWordList = new ArrayList<>();
     private ArrayList<String> _wordsToDisplay = new ArrayList<>();
@@ -31,6 +32,7 @@ public class FilterPresenter implements FilterContract.Presenter {
     @Override
     public void attachView(FilterContract.View view) {
         _view = view;
+        _view.showProgress(_isProgressShowing);
         _view.initialWordLoad();
     }
 
@@ -75,6 +77,7 @@ public class FilterPresenter implements FilterContract.Presenter {
     }
 
     private void updateItems() {
+        _isProgressShowing = true;
         _view.showProgress(true);
         if (_handler == null) _handler = new Handler();
         new Thread(new Runnable() {
@@ -94,6 +97,7 @@ public class FilterPresenter implements FilterContract.Presenter {
     }
 
     void onListUpdated() {
+        _isProgressShowing = false;
         _view.showProgress(false);
         _wordsToDisplay.clear();
         _wordsToDisplay.addAll(_pendingUpdates.remove(0));

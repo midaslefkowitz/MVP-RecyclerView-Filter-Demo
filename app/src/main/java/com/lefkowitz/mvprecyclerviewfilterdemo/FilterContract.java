@@ -19,6 +19,8 @@ public interface FilterContract {
     interface Presenter {
         void start();
 
+        void attachView(FilterContract.View view);
+
         String getItemAt(int position);
 
         String getPendingItemAt(int position);

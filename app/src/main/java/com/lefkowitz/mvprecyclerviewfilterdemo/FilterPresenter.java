@@ -11,6 +11,8 @@ import java.util.ArrayList;
 
 public class FilterPresenter implements FilterContract.Presenter {
 
+    private Handler _handler;
+
     private FilterContract.View _view;
     private DataManager _data;
 
@@ -23,6 +25,12 @@ public class FilterPresenter implements FilterContract.Presenter {
     public void start() {
         _fullWordList.addAll(_data.getWordsList());
         _wordsToDisplay.addAll(_data.getWordsList());
+        _view.initialWordLoad();
+    }
+
+    @Override
+    public void attachView(FilterContract.View view) {
+        _view = view;
         _view.initialWordLoad();
     }
 
@@ -68,13 +76,13 @@ public class FilterPresenter implements FilterContract.Presenter {
 
     private void updateItems() {
         _view.showProgress(true);
-        final Handler handler = new Handler();
+        if (_handler == null) _handler = new Handler();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 final DiffUtil.DiffResult diffResult =
                         DiffUtil.calculateDiff(new MyDiffCallback(FilterPresenter.this));
-                handler.post(new Runnable() {
+                _handler.post(new Runnable() {
                     @Override
                     public void run() {
                         _view.updateItems(diffResult);
